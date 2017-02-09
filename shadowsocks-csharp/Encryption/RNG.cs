@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography;
+using System.Linq;
 
 namespace Shadowsocks.Encryption
 {
@@ -35,7 +36,7 @@ namespace Shadowsocks.Encryption
         {
             try
             {
-                _rng.GetBytes(buf, 0, len);
+                _rng.GetBytes(buf.Take(len).ToArray());
             }
             catch (Exception)
             {

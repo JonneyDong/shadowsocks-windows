@@ -172,9 +172,13 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                var server = new Server(ssURL);
-                _config.configs.Add(server);
-                _config.index = _config.configs.Count - 1;
+                var configs = ssURL.Split('|');
+                foreach (var item in configs)
+                {
+                    var server = new Server(item);
+                    _config.configs.Add(server);
+                }
+                //_config.index = _config.configs.Count - 1;
                 SaveConfig(_config);
                 return true;
             }
@@ -235,7 +239,8 @@ namespace Shadowsocks.Controller
         {
             _config.isVerboseLogging = enabled;
             SaveConfig(_config);
-            if ( VerboseLoggingStatusChanged != null ) {
+            if (VerboseLoggingStatusChanged != null)
+            {
                 VerboseLoggingStatusChanged(this, new EventArgs());
             }
         }
@@ -306,7 +311,7 @@ namespace Shadowsocks.Controller
             string auth = server.auth ? "-auth" : string.Empty;
             string parts = $"{server.method}{auth}:{server.password}@{server.server}:{server.server_port}";
             string base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(parts));
-            if(!server.remarks.IsNullOrEmpty())
+            if (!server.remarks.IsNullOrEmpty())
             {
                 tag = $"#{HttpUtility.UrlEncode(server.remarks, Encoding.UTF8)}";
             }
@@ -637,7 +642,7 @@ namespace Shadowsocks.Controller
             {
                 TrafficPerSecond previous = traffic.Last;
                 TrafficPerSecond current = new TrafficPerSecond();
-                
+
                 var inbound = current.inboundCounter = InboundCounter;
                 var outbound = current.outboundCounter = OutboundCounter;
                 current.inboundIncreasement = inbound - previous.inboundCounter;
