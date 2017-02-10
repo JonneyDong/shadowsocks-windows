@@ -13,6 +13,7 @@ using Shadowsocks.Controller.Strategy;
 using Shadowsocks.Model;
 using Shadowsocks.Properties;
 using Shadowsocks.Util;
+using System.Linq;
 
 namespace Shadowsocks.Controller
 {
@@ -187,6 +188,10 @@ namespace Shadowsocks.Controller
                 Logging.LogUsefulException(e);
                 return false;
             }
+        }
+        public void ClearServer()
+        {
+            _config.configs.Where(s => System.Text.RegularExpressions.Regex.IsMatch(s.remarks, "[\\d]{4}-[\\d]*")).ToList().ForEach(f => _config.configs.Remove(f));
         }
 
         public void ToggleEnable(bool enabled)

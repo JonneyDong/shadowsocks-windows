@@ -13,6 +13,8 @@ using Shadowsocks.Controller;
 using Shadowsocks.Model;
 using Shadowsocks.Properties;
 using Shadowsocks.Util;
+using System.Net;
+using shadowsocks.extends;
 
 namespace Shadowsocks.View
 {
@@ -57,6 +59,9 @@ namespace Shadowsocks.View
         private ProxyForm proxyForm;
         private LogForm logForm;
         private HotkeySettingsForm hotkeySettingsForm;
+
+        private MenuItem AutoConfigItem;
+
         private string _urlToOpen;
 
         public MenuViewController(ShadowsocksController controller)
@@ -98,7 +103,7 @@ namespace Shadowsocks.View
                 _isFirstRun = true;
                 ShowConfigForm();
             }
-            else if(config.autoCheckUpdate)
+            else if (config.autoCheckUpdate)
             {
                 _isStartupChecking = true;
                 updateChecker.CheckUpdate(config, 3000);
@@ -212,9 +217,9 @@ namespace Shadowsocks.View
                         {
                             Color flyBlue = Color.FromArgb(25, 125, 191);
                             // Multiply with flyBlue
-                            int red   = color.R * flyBlue.R / 255;
-                            int green = color.G * flyBlue.G / 255; 
-                            int blue  = color.B * flyBlue.B / 255;
+                            int red = color.R * flyBlue.R / 255;
+                            int green = color.G * flyBlue.G / 255;
+                            int blue = color.B * flyBlue.B / 255;
                             iconCopy.SetPixel(x, y, Color.FromArgb(color.A, red, green, blue));
                         }
                     }
@@ -266,6 +271,8 @@ namespace Shadowsocks.View
                     this.SeperatorItem = new MenuItem("-"),
                     this.ConfigItem = CreateMenuItem("Edit Servers...", new EventHandler(this.Config_Click)),
                     CreateMenuItem("Statistics Config...", StatisticsConfigItem_Click),
+                    new MenuItem("-"),
+                    this.AutoConfigItem=CreateMenuItem("Auto Config...", new EventHandler(AutoConfig_Click)),
                     new MenuItem("-"),
                     CreateMenuItem("Share Server Config...", new EventHandler(this.QRCodeItem_Click)),
                     CreateMenuItem("Scan QRCode from Screen...", new EventHandler(this.ScanQRCodeItem_Click)),
@@ -323,7 +330,8 @@ namespace Shadowsocks.View
             ShareOverLANItem.Checked = controller.GetConfigurationCopy().shareOverLan;
         }
 
-        void controller_VerboseLoggingStatusChanged(object sender, EventArgs e) {
+        void controller_VerboseLoggingStatusChanged(object sender, EventArgs e)
+        {
             VerboseLoggingToggleItem.Checked = controller.GetConfigurationCopy().isVerboseLogging;
         }
 
@@ -432,7 +440,7 @@ namespace Shadowsocks.View
             }
 
             // user wants a seperator item between strategy and servers menugroup
-            items.Add( i++, new MenuItem("-") );
+            items.Add(i++, new MenuItem("-"));
 
             int strategyCount = i;
             Configuration configuration = controller.GetConfigurationCopy();
@@ -552,6 +560,20 @@ namespace Shadowsocks.View
         {
             ShowConfigForm();
         }
+        //************************************************************************************************
+        //
+        //
+        //*************************************************************************************************
+        private void AutoConfig_Click(object sender, EventArgs e)
+        {
+            System.Threading.Tasks.Task.Run( async() =>
+            {
+               var proxySockets = await new AutoNetProxy().GetProxiesByArukasCloud();
+                controller.ClearServer();
+                controller.AddServerBySSURL(proxySockets);
+                ShowMessage("已经更新了代理");
+            });
+        }
 
         private void Quit_Click(object sender, EventArgs e)
         {
@@ -576,6 +598,14 @@ namespace Shadowsocks.View
             _notifyIcon.ShowBalloonTip(0);
         }
 
+        private void ShowMessage(string msg)
+        {
+            _notifyIcon.BalloonTipTitle = I18N.GetString("Shadowsocks (Ver. 1.0 By Jonney)");
+            _notifyIcon.BalloonTipText = I18N.GetString(msg);
+            _notifyIcon.BalloonTipIcon = ToolTipIcon.Info;
+            _notifyIcon.ShowBalloonTip(5);
+        }
+
         private void AboutItem_Click(object sender, EventArgs e)
         {
             Process.Start("https://github.com/shadowsocks/shadowsocks-windows");
@@ -583,7 +613,7 @@ namespace Shadowsocks.View
 
         private void notifyIcon1_Click(object sender, MouseEventArgs e)
         {
-            if ( e.Button == MouseButtons.Middle )
+            if (e.Button == MouseButtons.Middle)
             {
                 ShowLogForm();
             }
@@ -645,9 +675,10 @@ namespace Shadowsocks.View
             controller.SelectStrategy((string)item.Tag);
         }
 
-        private void VerboseLoggingToggleItem_Click( object sender, EventArgs e ) {
-            VerboseLoggingToggleItem.Checked = ! VerboseLoggingToggleItem.Checked;
-            controller.ToggleVerboseLogging( VerboseLoggingToggleItem.Checked );
+        private void VerboseLoggingToggleItem_Click(object sender, EventArgs e)
+        {
+            VerboseLoggingToggleItem.Checked = !VerboseLoggingToggleItem.Checked;
+            controller.ToggleVerboseLogging(VerboseLoggingToggleItem.Checked);
         }
 
         private void StatisticsConfigItem_Click(object sender, EventArgs e)
